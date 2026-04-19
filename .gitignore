@@ -1,0 +1,26 @@
+# Dependencias
+node_modules/
+
+# Variables de entorno
+.env
+
+# Base de datos
+data/
+!data/.gitkeep
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# Logs
+logs/
+!logs/.gitkeep
+*.log
+npm-debug.log*
+
+# Binarios de yt-dlp (descargados localmente)
+yt-dlp.exe
+yt-dlp
+
+# OS
+.DS_Store
+Thumbs.db
