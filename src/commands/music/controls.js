@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { errorEmbed, successEmbed, checkVoiceChannel, paginate, formatDuration, premiumEmbed } = require('../../utils/helpers');
+const { errorEmbed, successEmbed, checkVoiceChannel, premiumEmbed, buildQueueMessage } = require('../../utils/helpers');
 const { isPremium } = require('../../database/db');
 const config = require('../../../config/config');
 
@@ -70,26 +70,8 @@ const queueCmd = {
       return interaction.reply({ embeds: [errorEmbed('La cola está vacía.')], ephemeral: true });
     }
     const page = interaction.options.getInteger('pagina') || 1;
-    const { items, totalPages, currentPage } = paginate(queue.songs, page, 10);
-    const list = items.map((s, i) => {
-      const index = (currentPage - 1) * 10 + i;
-      const prefix = index === 0 ? '▶️' : `\`${index}.\``;
-      return `${prefix} **${s.title}** — ${formatDuration(s.duration)}`;
-    }).join('\n');
-    const totalDuration = queue.songs.reduce((acc, s) => acc + (s.duration || 0), 0);
-    return interaction.reply({
-      embeds: [new EmbedBuilder()
-        .setColor(config.colors.primary)
-        .setTitle(`📋 Cola — ${queue.songs.length} canciones`)
-        .setDescription(list)
-        .addFields(
-          { name: '⏱ Duración total', value: formatDuration(totalDuration), inline: true },
-          { name: '🔁 Loop', value: queue.loop, inline: true },
-          { name: '🔊 Volumen', value: `${Math.round(queue.volume * 100)}%`, inline: true },
-        )
-        .setFooter({ text: `Página ${currentPage}/${totalPages}` })
-      ]
-    });
+    const { embed, row } = buildQueueMessage(queue, page);
+    return interaction.reply({ embeds: [embed], components: [row] });
   },
 };
 

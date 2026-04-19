@@ -55,6 +55,18 @@ db.exec(`
     songs_played INTEGER DEFAULT 0,
     total_time   INTEGER DEFAULT 0
   );
+
+  -- Favoritos por usuario
+  CREATE TABLE IF NOT EXISTS favorites (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    TEXT NOT NULL,
+    title      TEXT NOT NULL,
+    url        TEXT NOT NULL,
+    duration   INTEGER DEFAULT 0,
+    thumbnail  TEXT,
+    added_at   INTEGER DEFAULT (unixepoch()),
+    UNIQUE(user_id, url)
+  );
 `);
 
 // ─────────────────────────────────────────
@@ -176,6 +188,37 @@ function getStats(guildId) {
   };
 }
 
+// ─────────────────────────────────────────
+// FUNCIONES - FAVORITOS
+// ─────────────────────────────────────────
+
+function addFavorite(userId, song) {
+  return db.prepare(`
+    INSERT OR IGNORE INTO favorites (user_id, title, url, duration, thumbnail)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(userId, song.title, song.url, song.duration || 0, song.thumbnail || null).changes;
+}
+
+function removeFavorite(userId, id) {
+  return db.prepare(`
+    DELETE FROM favorites WHERE id = ? AND user_id = ?
+  `).run(id, userId).changes;
+}
+
+function getUserFavorites(userId) {
+  return db.prepare(`
+    SELECT * FROM favorites WHERE user_id = ? ORDER BY added_at DESC
+  `).all(userId);
+}
+
+function getMostPlayed(guildId, limit = 5) {
+  return db.prepare(`
+    SELECT title, url, COUNT(*) as play_count
+    FROM history WHERE guild_id = ?
+    GROUP BY url ORDER BY play_count DESC LIMIT ?
+  `).all(guildId, limit);
+}
+
 module.exports = {
   db,
   getGuild,
@@ -191,4 +234,8 @@ module.exports = {
   getHistory,
   incrementStats,
   getStats,
+  addFavorite,
+  removeFavorite,
+  getUserFavorites,
+  getMostPlayed,
 };

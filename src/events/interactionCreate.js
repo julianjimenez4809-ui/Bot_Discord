@@ -1,4 +1,4 @@
-const { errorEmbed } = require('../utils/helpers');
+const { errorEmbed, buildQueueMessage } = require('../utils/helpers');
 
 module.exports = {
   name: 'interactionCreate',
@@ -72,6 +72,22 @@ module.exports = {
           components: [],
         });
       }
+    }
+
+    // ── Botones de paginación de cola ─────
+    if (interaction.isButton()) {
+      const { customId } = interaction;
+      if (!customId.startsWith('queue_')) return;
+
+      const queue = queues.get(interaction.guild.id);
+      if (!queue || queue.songs.length === 0) {
+        return interaction.update({ components: [] }).catch(() => {});
+      }
+
+      const currentPage = parseInt(customId.split('_')[2]);
+      const newPage = customId.startsWith('queue_prev') ? currentPage - 1 : currentPage + 1;
+      const { embed, row } = buildQueueMessage(queue, newPage);
+      return interaction.update({ embeds: [embed], components: [row] });
     }
   },
 };

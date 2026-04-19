@@ -1,5 +1,5 @@
 const play = require('play-dl');
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const config = require('../../config/config');
 
 /**
@@ -146,6 +146,43 @@ function paginate(array, page, perPage = 10) {
   };
 }
 
+function buildQueueMessage(queue, page) {
+  const { items, totalPages, currentPage } = paginate(queue.songs, page, 10);
+  const totalDuration = queue.songs.reduce((acc, s) => acc + (s.duration || 0), 0);
+
+  const list = items.map((s, i) => {
+    const index = (currentPage - 1) * 10 + i;
+    const prefix = index === 0 ? '▶️' : `\`${index}.\``;
+    return `${prefix} **${s.title}** — ${formatDuration(s.duration)}`;
+  }).join('\n');
+
+  const embed = new EmbedBuilder()
+    .setColor(config.colors.primary)
+    .setTitle(`📋 Cola — ${queue.songs.length} canciones`)
+    .setDescription(list)
+    .addFields(
+      { name: '⏱ Duración total', value: formatDuration(totalDuration), inline: true },
+      { name: '🔁 Loop', value: queue.loop, inline: true },
+      { name: '🔊 Volumen', value: `${Math.round(queue.volume * 100)}%`, inline: true },
+    )
+    .setFooter({ text: `Página ${currentPage}/${totalPages}` });
+
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`queue_prev_${currentPage}`)
+      .setLabel('◀️ Anterior')
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(currentPage <= 1),
+    new ButtonBuilder()
+      .setCustomId(`queue_next_${currentPage}`)
+      .setLabel('Siguiente ▶️')
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(currentPage >= totalPages),
+  );
+
+  return { embed, row };
+}
+
 module.exports = {
   search,
   errorEmbed,
@@ -155,4 +192,5 @@ module.exports = {
   formatDuration,
   formatTotalDuration,
   paginate,
+  buildQueueMessage,
 };
