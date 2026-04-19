@@ -10,7 +10,7 @@ const {
 const { spawn } = require('child_process');
 const { PassThrough } = require('stream');
 const path = require('path');
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const ffmpegPath = require('ffmpeg-static');
 const config = require('../../config/config');
 const { addToHistory, incrementStats } = require('../database/db');
@@ -175,7 +175,7 @@ class MusicQueue {
       addToHistory(this.guild.id, song.requestedById, song);
       if (song.duration) incrementStats(this.guild.id, song.duration);
 
-      this.textChannel.send({ embeds: [this._nowPlayingEmbed(song)] });
+      this.textChannel.send({ embeds: [this._nowPlayingEmbed(song)], components: [this._buildButtons()] });
 
     } catch (error) {
       console.error('[Stream Error]', error);
@@ -299,6 +299,39 @@ class MusicQueue {
         { name: '🔊 Volumen', value: `${Math.round(this.volume * 100)}%`, inline: true },
         ...(this.premium ? [{ name: '⭐ Premium', value: 'Activo', inline: true }] : []),
       );
+  }
+
+  _buildButtons(disabled = false) {
+    const loopLabels = { off: '🔁 Loop: Off', song: '🔂 Loop: Canción', queue: '🔁 Loop: Cola' };
+    const loopStyles = { off: ButtonStyle.Secondary, song: ButtonStyle.Success, queue: ButtonStyle.Primary };
+
+    return new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('music_pause')
+        .setLabel(this.paused ? '▶️ Reanudar' : '⏸️ Pausar')
+        .setStyle(this.paused ? ButtonStyle.Success : ButtonStyle.Primary)
+        .setDisabled(disabled),
+      new ButtonBuilder()
+        .setCustomId('music_skip')
+        .setLabel('⏭️ Saltar')
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(disabled),
+      new ButtonBuilder()
+        .setCustomId('music_loop')
+        .setLabel(loopLabels[this.loop])
+        .setStyle(loopStyles[this.loop])
+        .setDisabled(disabled),
+      new ButtonBuilder()
+        .setCustomId('music_shuffle')
+        .setLabel('🔀 Mezclar')
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(disabled),
+      new ButtonBuilder()
+        .setCustomId('music_stop')
+        .setLabel('⏹️ Detener')
+        .setStyle(ButtonStyle.Danger)
+        .setDisabled(disabled),
+    );
   }
 
   _embed(description, color = config.colors.primary) {

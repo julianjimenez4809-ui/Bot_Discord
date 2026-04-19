@@ -93,19 +93,11 @@ async function registerCommands() {
   try {
     console.log(chalk.yellow('\n🔄 Registrando slash commands...'));
 
-    if (config.guildId && process.env.NODE_ENV === 'development') {
-      await rest.put(
-        Routes.applicationGuildCommands(config.clientId, config.guildId),
-        { body: commandsData }
-      );
-      console.log(chalk.green(`✅ ${commandsData.length} comandos registrados en servidor de pruebas`));
-    } else {
-      await rest.put(
-        Routes.applicationCommands(config.clientId),
-        { body: commandsData }
-      );
-      console.log(chalk.green(`✅ ${commandsData.length} comandos registrados globalmente`));
-    }
+    await rest.put(
+      Routes.applicationCommands(config.clientId),
+      { body: commandsData }
+    );
+    console.log(chalk.green(`✅ ${commandsData.length} comandos registrados globalmente`));
   } catch (error) {
     console.error(chalk.red('❌ Error registrando comandos:'), error);
   }
