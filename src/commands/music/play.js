@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { MusicQueue } = require('../../structures/MusicQueue');
-const { search, errorEmbed } = require('../../utils/helpers');
+const { search, errorEmbed, validateUrl } = require('../../utils/helpers');
 const { isPremium } = require('../../database/db');
 const config = require('../../../config/config');
 
@@ -18,6 +18,11 @@ module.exports = {
     await interaction.deferReply();
 
     const query = interaction.options.getString('query');
+
+    if (!validateUrl(query)) {
+      return interaction.editReply({ embeds: [errorEmbed('URL no permitida. Solo se aceptan links de YouTube, Spotify o SoundCloud.')] });
+    }
+
     const memberVC = interaction.member.voice.channel;
 
     if (!memberVC) {

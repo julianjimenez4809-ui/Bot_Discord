@@ -70,6 +70,25 @@ module.exports = {
     link: '🔗',
   },
 
+  // ── Favoritos ────────────────────────────
+  favorites: {
+    maxFree: 10,
+    maxPremium: 100,
+  },
+
+  // ── Cooldowns (ms) ───────────────────────
+  cooldowns: {
+    free: 5000,
+    premium: 1000,
+  },
+
+  // ── URLs permitidas ──────────────────────
+  allowedDomains: [
+    'youtube.com', 'www.youtube.com', 'youtu.be', 'music.youtube.com',
+    'spotify.com', 'open.spotify.com',
+    'soundcloud.com', 'www.soundcloud.com',
+  ],
+
   // ── Base de datos ────────────────────────
   db: {
     path: process.env.DB_PATH || './data/database.sqlite',

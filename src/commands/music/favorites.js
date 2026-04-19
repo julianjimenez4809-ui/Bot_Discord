@@ -45,6 +45,17 @@ module.exports = {
         return interaction.reply({ embeds: [errorEmbed('No hay ninguna canción reproduciéndose.')], ephemeral: true });
       }
 
+      const currentFavs = getUserFavorites(userId);
+      const premium = isPremium(interaction.guild.id);
+      const maxFavs = premium ? config.favorites.maxPremium : config.favorites.maxFree;
+
+      if (currentFavs.length >= maxFavs) {
+        const msg = premium
+          ? `Has alcanzado el límite de **${maxFavs} favoritos** premium.`
+          : `Has alcanzado el límite de **${maxFavs} favoritos** del plan gratuito. ⭐ Premium permite hasta ${config.favorites.maxPremium}.`;
+        return interaction.reply({ embeds: [errorEmbed(msg)], ephemeral: true });
+      }
+
       const added = addFavorite(userId, song);
       if (!added) {
         return interaction.reply({ embeds: [errorEmbed('Esa canción ya está en tus favoritos.')], ephemeral: true });

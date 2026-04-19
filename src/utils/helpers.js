@@ -146,6 +146,16 @@ function paginate(array, page, perPage = 10) {
   };
 }
 
+function validateUrl(query) {
+  try {
+    const url = new URL(query);
+    const hostname = url.hostname.toLowerCase();
+    return config.allowedDomains.some(d => hostname === d || hostname.endsWith('.' + d));
+  } catch {
+    return true; // No es URL, es búsqueda por nombre — permitida
+  }
+}
+
 function buildQueueMessage(queue, page) {
   const { items, totalPages, currentPage } = paginate(queue.songs, page, 10);
   const totalDuration = queue.songs.reduce((acc, s) => acc + (s.duration || 0), 0);
@@ -185,6 +195,7 @@ function buildQueueMessage(queue, page) {
 
 module.exports = {
   search,
+  validateUrl,
   errorEmbed,
   successEmbed,
   premiumEmbed,

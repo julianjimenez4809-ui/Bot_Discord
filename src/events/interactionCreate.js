@@ -1,4 +1,9 @@
 const { errorEmbed, buildQueueMessage } = require('../utils/helpers');
+const { isPremium } = require('../database/db');
+const config = require('../../config/config');
+
+const MUSIC_COMMANDS = new Set(['play','skip','stop','pause','queue','nowplaying','volume','loop','shuffle','remove','move','lyrics','favorites','playlist']);
+const cooldowns = new Map();
 
 module.exports = {
   name: 'interactionCreate',
@@ -9,6 +14,25 @@ module.exports = {
     if (interaction.isChatInputCommand()) {
       const command = client.commands.get(interaction.commandName);
       if (!command) return;
+
+      // Cooldown
+      if (MUSIC_COMMANDS.has(interaction.commandName)) {
+        const premium = isPremium(interaction.guild.id);
+        const cooldownMs = premium ? config.cooldowns.premium : config.cooldowns.free;
+        const userId = interaction.user.id;
+        const key = `${userId}:${interaction.commandName}`;
+        const now = Date.now();
+        const lastUsed = cooldowns.get(key) || 0;
+        const remaining = cooldownMs - (now - lastUsed);
+
+        if (remaining > 0) {
+          return interaction.reply({
+            embeds: [errorEmbed(`⏳ Espera **${(remaining / 1000).toFixed(1)}s** antes de usar este comando de nuevo.${!premium ? ' ⭐ Premium reduce el cooldown a 1s.' : ''}`)],
+            ephemeral: true,
+          });
+        }
+        cooldowns.set(key, now);
+      }
 
       try {
         await command.execute(interaction, queues);
